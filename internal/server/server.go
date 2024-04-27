@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -9,7 +10,7 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 
-	"go-ssh-client/internal/database"
+	"github.com/shahin-bayat/go-ssh-client/internal/database"
 )
 
 type Server struct {
@@ -24,6 +25,11 @@ func NewServer() *http.Server {
 		port: port,
 
 		db: database.New(),
+	}
+
+	err := NewServer.db.CreateUserTable()
+	if err != nil {
+		log.Printf(err.Error())
 	}
 
 	// Declare Server config

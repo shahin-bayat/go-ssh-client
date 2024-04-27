@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"go-ssh-client/internal/server"
+	"github.com/shahin-bayat/go-ssh-client/internal/server"
 )
 
 func main() {
