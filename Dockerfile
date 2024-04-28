@@ -5,6 +5,9 @@ WORKDIR /app
 # Install Air
 RUN go install github.com/cosmtrek/air@latest
 
+# install goose
+RUN go install github.com/pressly/goose/v3/cmd/goose@latest
+
 # Copy only the necessary Go module files
 COPY go.mod go.sum ./
 
@@ -20,9 +23,9 @@ COPY . .
 # Expose port 7070
 EXPOSE 7070
 
-
-# Set execute permissions for the app executable
+RUN chmod +x /app/startup.sh
 
 # Command to run the application
 # CMD ["/ssh-client"]
-CMD ["air", "-c", ".air.toml"]
+#CMD ["air", "-c", ".air.toml"]
+CMD ["./startup.sh"]
