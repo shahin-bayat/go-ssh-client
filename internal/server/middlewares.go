@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"errors"
 	"github.com/shahin-bayat/go-ssh-client/internal/utils"
 	"net/http"
@@ -39,6 +40,37 @@ func (s *Server) AdminOnly(next http.Handler) http.Handler {
 				"WWW-Authenticate": `Basic realm="restricted", charset="UTF-8"`,
 			}
 			utils.WriteErrorJSON(w, http.StatusUnauthorized, ErrorUnauthorized, headers)
+		},
+	)
+}
+
+func (s *Server) Auth(next http.Handler) http.Handler {
+	return http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			username, password, ok := r.BasicAuth()
+			if ok {
+				existingUser, err := s.db.GetUser(username)
+				if err != nil {
+					utils.WriteErrorJSON(w, http.StatusUnauthorized, err, nil)
+					return
+				}
+
+				usernameHash := utils.Hash(username)
+				existingUsernameHash := utils.Hash(existingUser.Username)
+				existingPasswordHash := existingUser.Password
+
+				usernameMatch := utils.Match(usernameHash, existingUsernameHash)
+				passwordMatch := utils.PasswordMatch(existingPasswordHash, password)
+
+				if usernameMatch && passwordMatch {
+					next.ServeHTTP(w, r)
+					ctx := r.Context()
+					ctx = context.WithValue(ctx, "userId", existingUser.ID)
+					return
+				}
+			}
+
+			http.Redirect(w, r, "/", http.StatusSeeOther)
 		},
 	)
 }
