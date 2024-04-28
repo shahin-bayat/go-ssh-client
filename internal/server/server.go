@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -27,12 +26,6 @@ func NewServer() *http.Server {
 		db: database.New(),
 	}
 
-	err := NewServer.db.CreateUserTable()
-	if err != nil {
-		log.Printf(err.Error())
-	}
-
-	// Declare Server config
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", NewServer.port),
 		Handler:      NewServer.RegisterRoutes(),

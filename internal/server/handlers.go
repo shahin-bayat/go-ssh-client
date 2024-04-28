@@ -1,12 +1,23 @@
 package server
 
 import (
+	"github.com/shahin-bayat/go-ssh-client/internal/models"
 	"github.com/shahin-bayat/go-ssh-client/internal/utils"
 	"log"
 	"net/http"
 )
 
-func (s *Server) RegisterUser(w http.ResponseWriter, r *http.Request) {
+func (s *Server) ServeHomePage(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "templates/index.html")
+}
+func (s *Server) ServerAdminPage(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "templates/admin.html")
+}
+func (s *Server) ServeUserPage(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "templates/user.html")
+}
+
+func (s *Server) Register(w http.ResponseWriter, r *http.Request) {
 	log.Println("Registering user")
 	// Parse form values
 	username := r.PostFormValue("username")
@@ -45,12 +56,10 @@ func (s *Server) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// 6. return a json success message
-	utils.WriteJSON(
-		w, http.StatusCreated, struct {
-			Message string `json:"message"`
-		}{
-			Message: "User created successfully",
-		}, nil,
-	)
+	response := models.SuccessResponse{
+		Message: "User created successfully",
+	}
+	utils.WriteJSON(w, http.StatusCreated, response, nil)
 
 }
+func (s *Server) Login(w http.ResponseWriter, r *http.Request) {}
