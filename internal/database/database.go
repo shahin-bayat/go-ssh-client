@@ -17,6 +17,7 @@ type Service interface {
 	Health() models.SuccessResponse
 	UserExists(username string) error
 	CreateUser(username, password, role string) error
+	GetUser(username string) (*models.User, error)
 	UpdateUserPassword(username, newPassword string) (sql.Result, error)
 }
 

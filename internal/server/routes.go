@@ -15,7 +15,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	// Template routes
 	r.Get("/", s.ServeHomePage)
-	r.Get("/admin", s.ServerAdminPage)
+	r.With(s.AdminOnly).Get("/admin", s.ServerAdminPage)
 	r.Get("/user", s.ServeUserPage)
 
 	r.Post("/register", s.Register)

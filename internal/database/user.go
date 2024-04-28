@@ -2,7 +2,13 @@ package database
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+	"github.com/shahin-bayat/go-ssh-client/internal/models"
+)
+
+var (
+	ErrorGetUser = errors.New("error getting user")
 )
 
 func (s *service) UserExists(username string) error {
@@ -34,4 +40,15 @@ func (s *service) UpdateUserPassword(username, newPassword string) (sql.Result, 
 		return nil, err
 	}
 	return result, nil
+}
+
+func (s *service) GetUser(username string) (*models.User, error) {
+	var user models.User
+	err := s.db.QueryRow(`SELECT * FROM users WHERE username = $1`, username).Scan(
+		&user.ID, &user.Username, &user.Password, &user.Role, &user.CreatedAt,
+	)
+	if err != nil {
+		return nil, ErrorGetUser
+	}
+	return &user, nil
 }

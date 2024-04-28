@@ -3,7 +3,6 @@ package server
 import (
 	"github.com/shahin-bayat/go-ssh-client/internal/models"
 	"github.com/shahin-bayat/go-ssh-client/internal/utils"
-	"log"
 	"net/http"
 )
 
@@ -18,8 +17,6 @@ func (s *Server) ServeUserPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) Register(w http.ResponseWriter, r *http.Request) {
-	log.Println("Registering user")
-	// Parse form values
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
 	confirmPassword := r.PostFormValue("confirmPassword")
@@ -27,32 +24,32 @@ func (s *Server) Register(w http.ResponseWriter, r *http.Request) {
 	// 1. validate the form values
 	err := utils.ValidateUserForm(username, password, confirmPassword)
 	if err != nil {
-		utils.WriteErrorJSON(w, http.StatusBadRequest, err)
+		utils.WriteErrorJSON(w, http.StatusBadRequest, err, nil)
 		return
 	}
 	// 2. check if the user already exists in db
 	err = s.db.UserExists(username)
 	if err != nil {
-		utils.WriteErrorJSON(w, http.StatusBadRequest, err)
+		utils.WriteErrorJSON(w, http.StatusBadRequest, err, nil)
 		return
 
 	}
 	// 3. hash the password
 	hashedPassword, err := utils.HashPassword(password)
 	if err != nil {
-		utils.WriteErrorJSON(w, http.StatusInternalServerError, err)
+		utils.WriteErrorJSON(w, http.StatusInternalServerError, err, nil)
 		return
 	}
 	// 4. insert the user into the db
 	err = s.db.CreateUser(username, hashedPassword, "user")
 	if err != nil {
-		utils.WriteErrorJSON(w, http.StatusInternalServerError, err)
+		utils.WriteErrorJSON(w, http.StatusInternalServerError, err, nil)
 		return
 	}
 	// 5. create ssh user on the server
 	err = utils.CreateSSHUser(username, password)
 	if err != nil {
-		utils.WriteErrorJSON(w, http.StatusInternalServerError, err)
+		utils.WriteErrorJSON(w, http.StatusInternalServerError, err, nil)
 		return
 	}
 	// 6. return a json success message

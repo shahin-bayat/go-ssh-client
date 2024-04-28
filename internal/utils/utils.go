@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/json"
 	"fmt"
 	"golang.org/x/crypto/bcrypt"
@@ -31,6 +33,9 @@ func ValidateUserForm(username, password, confirmPassword string) error {
 	return nil
 }
 
+func Hash(val string) [32]byte {
+	return sha256.Sum256([]byte(val))
+}
 func HashPassword(password string) (string, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -38,6 +43,15 @@ func HashPassword(password string) (string, error) {
 	}
 
 	return string(hashedPassword), nil
+}
+
+func PasswordMatch(hashedPassword, password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	return err == nil
+}
+
+func Match(val1, val2 [32]byte) bool {
+	return subtle.ConstantTimeCompare(val1[:], val2[:]) == 1
 }
 
 func CreateSSHUser(username, password string) error {
@@ -80,8 +94,15 @@ func WriteJSON(w http.ResponseWriter, status int, v interface{}, headers map[str
 	}
 }
 
-func WriteErrorJSON(w http.ResponseWriter, status int, err error) {
+func WriteErrorJSON(w http.ResponseWriter, status int, err error, headers map[string]string) {
 	w.Header().Set("Content-Type", "application/json")
+	for key, value := range headers {
+		_, ok := headers[key]
+		if !ok {
+			continue
+		}
+		w.Header().Set(key, value)
+	}
 	w.WriteHeader(status)
 	errorResponse := ErrorResponse{Error: err.Error()}
 	if err := json.NewEncoder(w).Encode(errorResponse); err != nil {
