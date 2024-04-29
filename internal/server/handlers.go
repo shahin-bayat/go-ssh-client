@@ -4,59 +4,77 @@ import (
 	"github.com/shahin-bayat/go-ssh-client/internal/models"
 	"github.com/shahin-bayat/go-ssh-client/internal/utils"
 	"net/http"
+	"time"
 )
 
-func (s *Server) ServeHomePage(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "templates/index.html")
+func (s *Server) ServeLoginPage(w http.ResponseWriter, r *http.Request) {
+	err := s.loginTmpl.Execute(w, nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
 }
 func (s *Server) ServerAdminPage(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "templates/admin.html")
+	err := s.adminTmpl.Execute(w, nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 func (s *Server) ServeUserPage(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "templates/user.html")
+	err := s.userTmpl.Execute(w, nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func (s *Server) Register(w http.ResponseWriter, r *http.Request) {
+	//	TODO: Implement registration
+}
+func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
-	confirmPassword := r.PostFormValue("confirmPassword")
 
-	// 1. validate the form values
-	err := utils.ValidateUserForm(username, password, confirmPassword)
-	if err != nil {
-		utils.WriteErrorJSON(w, http.StatusBadRequest, err, nil)
+	if username == "" || password == "" {
+		utils.RenderError(w, s.loginTmpl, "validation-error", "username and password are required fields")
 		return
 	}
-	// 2. check if the user already exists in db
-	err = s.db.UserExists(username)
+	existingUser, err := s.db.GetUser(username)
 	if err != nil {
-		utils.WriteErrorJSON(w, http.StatusBadRequest, err, nil)
+		utils.RenderError(w, s.loginTmpl, "validation-error", "invalid username or password")
 		return
+	}
 
-	}
-	// 3. hash the password
-	hashedPassword, err := utils.HashPassword(password)
-	if err != nil {
-		utils.WriteErrorJSON(w, http.StatusInternalServerError, err, nil)
+	if !utils.PasswordMatch(existingUser.Password, password) {
+		utils.RenderError(w, s.loginTmpl, "validation-error", "invalid password")
 		return
 	}
-	// 4. insert the user into the db
-	err = s.db.CreateUser(username, hashedPassword, "user")
-	if err != nil {
-		utils.WriteErrorJSON(w, http.StatusInternalServerError, err, nil)
-		return
-	}
-	// 5. create ssh user on the server
-	err = utils.CreateSSHUser(username, password)
-	if err != nil {
-		utils.WriteErrorJSON(w, http.StatusInternalServerError, err, nil)
-		return
-	}
-	// 6. return a json success message
-	response := models.SuccessResponse{
-		Message: "User created successfully",
-	}
-	utils.WriteJSON(w, http.StatusCreated, response, nil)
 
+	session, err := s.createOrGetSession(username, existingUser.ID)
+	if err != nil {
+		utils.RenderError(w, s.loginTmpl, "validation-error", "failed to create session")
+		return
+	}
+
+	http.SetCookie(
+		w, &http.Cookie{
+			Name:     "session",
+			Value:    session.Token,
+			Expires:  session.ExpiresAt,
+			HttpOnly: true,
+		},
+	)
+	redirectTo := "/user"
+	if existingUser.Role == "admin" {
+		redirectTo = "/admin"
+	}
+	w.Header().Set("HX-Redirect", redirectTo)
 }
-func (s *Server) Login(w http.ResponseWriter, r *http.Request) {}
+
+func (s *Server) createOrGetSession(username string, userID uint) (*models.Session, error) {
+	session, err := s.db.GetSessionByUserId(userID)
+	if err != nil || session.ExpiresAt.Before(time.Now()) {
+		// If there's no session or the session has expired, create a new one
+		return s.db.CreateUserSession(username, userID)
+	}
+	return session, nil
+}

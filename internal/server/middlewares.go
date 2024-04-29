@@ -1,76 +1,54 @@
 package server
 
 import (
-	"context"
-	"errors"
 	"github.com/shahin-bayat/go-ssh-client/internal/utils"
 	"net/http"
+	"time"
 )
 
-var (
-	ErrorUnauthorized = errors.New("unauthorized")
-)
-
-func (s *Server) AdminOnly(next http.Handler) http.Handler {
+func (s *Server) requireRole(role []string, next http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			// Extract the username and password from the request
-			username, password, ok := r.BasicAuth()
-			if ok {
-				existingUser, err := s.db.GetUser(username)
-				if err != nil {
-					utils.WriteErrorJSON(w, http.StatusUnauthorized, err, nil)
-					return
-				}
-
-				usernameHash := utils.Hash(username)
-				existingUsernameHash := utils.Hash(existingUser.Username)
-				existingPasswordHash := existingUser.Password
-
-				usernameMatch := utils.Match(usernameHash, existingUsernameHash)
-				passwordMatch := utils.PasswordMatch(existingPasswordHash, password)
-
-				if usernameMatch && passwordMatch && existingUser.Role == "admin" {
-					next.ServeHTTP(w, r)
-					return
-				}
+			c, err := r.Cookie("session")
+			redirectTo := "/"
+			if err != nil {
+				http.Redirect(w, r, redirectTo, http.StatusSeeOther)
+				return
 			}
 
-			headers := map[string]string{
-				"WWW-Authenticate": `Basic realm="restricted", charset="UTF-8"`,
+			sessionToken := c.Value
+			session, err := s.db.GetSession(sessionToken)
+			if err != nil {
+				http.Redirect(w, r, redirectTo, http.StatusSeeOther)
+				return
 			}
-			utils.WriteErrorJSON(w, http.StatusUnauthorized, ErrorUnauthorized, headers)
+
+			if session.ExpiresAt.Before(time.Now()) {
+				http.Redirect(w, r, redirectTo, http.StatusSeeOther)
+				return
+			}
+
+			existingUser, err := s.db.GetUserById(session.UserID)
+			if err != nil {
+				http.Redirect(w, r, redirectTo, http.StatusSeeOther)
+				return
+			}
+
+			// Check if user has the required role
+			if !utils.SliceHas(existingUser.Role, role) {
+				http.Redirect(w, r, redirectTo, http.StatusSeeOther)
+				return
+			}
+
+			next.ServeHTTP(w, r)
 		},
 	)
 }
 
+func (s *Server) AdminOnly(next http.Handler) http.Handler {
+	return s.requireRole([]string{"admin"}, next)
+}
+
 func (s *Server) Auth(next http.Handler) http.Handler {
-	return http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			username, password, ok := r.BasicAuth()
-			if ok {
-				existingUser, err := s.db.GetUser(username)
-				if err != nil {
-					utils.WriteErrorJSON(w, http.StatusUnauthorized, err, nil)
-					return
-				}
-
-				usernameHash := utils.Hash(username)
-				existingUsernameHash := utils.Hash(existingUser.Username)
-				existingPasswordHash := existingUser.Password
-
-				usernameMatch := utils.Match(usernameHash, existingUsernameHash)
-				passwordMatch := utils.PasswordMatch(existingPasswordHash, password)
-
-				if usernameMatch && passwordMatch {
-					next.ServeHTTP(w, r)
-					ctx := r.Context()
-					ctx = context.WithValue(ctx, "userId", existingUser.ID)
-					return
-				}
-			}
-
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-		},
-	)
+	return s.requireRole([]string{"admin", "user"}, next)
 }

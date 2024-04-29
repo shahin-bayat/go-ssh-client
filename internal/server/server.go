@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
 	"os"
 	"strconv"
@@ -13,17 +14,21 @@ import (
 )
 
 type Server struct {
-	port int
-
-	db database.Service
+	port      int
+	db        database.Service
+	loginTmpl *template.Template
+	adminTmpl *template.Template
+	userTmpl  *template.Template
 }
 
 func NewServer() *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
 	NewServer := &Server{
-		port: port,
-
-		db: database.New(),
+		port:      port,
+		db:        database.New(),
+		loginTmpl: template.Must(template.ParseFiles("web/pages/login.html")),
+		adminTmpl: template.Must(template.ParseFiles("web/pages/admin.html")),
+		userTmpl:  template.Must(template.ParseFiles("web/pages/user.html")),
 	}
 
 	server := &http.Server{

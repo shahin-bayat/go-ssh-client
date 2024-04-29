@@ -15,10 +15,13 @@ import (
 
 type Service interface {
 	Health() models.SuccessResponse
-	UserExists(username string) error
 	CreateUser(username, password, role string) error
 	GetUser(username string) (*models.User, error)
-	UpdateUserPassword(username, newPassword string) (sql.Result, error)
+	GetUserById(id uint) (*models.User, error)
+	CreateAdminUser(username, password string) error
+	CreateUserSession(username string, userId uint) (*models.Session, error)
+	GetSession(token string) (*models.Session, error)
+	GetSessionByUserId(userId uint) (*models.Session, error)
 }
 
 type service struct {

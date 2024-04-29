@@ -1,11 +1,10 @@
 package server
 
 import (
-	"github.com/shahin-bayat/go-ssh-client/internal/utils"
-	"net/http"
-
+	"encoding/json"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"net/http"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
@@ -14,7 +13,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Get("/health", s.healthHandler)
 
 	// Template routes
-	r.Get("/", s.ServeHomePage)
+	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("./web/static"))))
+	r.Get("/", s.ServeLoginPage)
 	r.With(s.AdminOnly).Get("/admin", s.ServerAdminPage)
 	r.With(s.Auth).Get("/user", s.ServeUserPage)
 
@@ -25,7 +25,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 }
 
 func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
-	utils.WriteJSON(
-		w, http.StatusCreated, s.db.Health(), nil,
-	)
+	w.Header().Set("Content-Type", "application/json")
+	response := s.db.Health()
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }

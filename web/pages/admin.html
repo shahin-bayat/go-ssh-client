@@ -1,0 +1,23 @@
+{{ block "admin" . }}
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+        <link rel="stylesheet" href="/static/output.css">
+        <title>Admin Dashboard</title>
+    </head>
+    <body>
+    <h1>Welcome to User Dashboard</h1>
+
+    <h2>Change Password</h2>
+    <form method="post">
+        <input type="text" name="username" placeholder="Username" required><br>
+        <input type="password" name="password" placeholder="New Password" required><br>
+        <input type="password" name="confirmPassword" placeholder="Confirm Password" required><br>
+        <button type="submit">Create User</button>
+    </form>
+    </body>
+    </html>
+{{ end }}
