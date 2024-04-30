@@ -20,6 +20,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	r.With(s.AdminOnly).Post("/register", s.Register)
 	r.Post("/login", s.Login)
+	r.Post("/logout", s.Logout)
 
 	return r
 }

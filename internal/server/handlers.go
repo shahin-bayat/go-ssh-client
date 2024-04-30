@@ -70,6 +70,35 @@ func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("HX-Redirect", redirectTo)
 }
 
+func (s *Server) Logout(w http.ResponseWriter, r *http.Request) {
+	c, err := r.Cookie("session")
+	if err != nil {
+		w.Header().Set("HX-Redirect", "/")
+		return
+	}
+	http.SetCookie(
+		w, &http.Cookie{
+			Name:    "session",
+			Value:   "",
+			Expires: time.Now(),
+		},
+	)
+
+	sessionToken := c.Value
+	_, err = s.db.GetSession(sessionToken)
+	if err != nil {
+		w.Header().Set("HX-Redirect", "/")
+		return
+	}
+	err = s.db.DeleteSession(sessionToken)
+	if err != nil {
+		w.Header().Set("HX-Redirect", "/")
+		return
+	}
+
+	w.Header().Set("HX-Redirect", "/")
+}
+
 func (s *Server) createOrGetSession(username string, userID uint) (*models.Session, error) {
 	session, err := s.db.GetSessionByUserId(userID)
 	if err != nil || session.ExpiresAt.Before(time.Now()) {

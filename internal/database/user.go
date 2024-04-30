@@ -83,6 +83,14 @@ func (s *service) GetSession(token string) (*models.Session, error) {
 	return &session, nil
 }
 
+func (s *service) DeleteSession(token string) error {
+	_, err := s.db.Exec(`DELETE FROM sessions WHERE token = $1`, token)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *service) GetSessionByUserId(userId uint) (*models.Session, error) {
 	var session models.Session
 	err := s.db.QueryRow(`SELECT * FROM sessions WHERE user_id = $1`, userId).Scan(
@@ -92,7 +100,6 @@ func (s *service) GetSessionByUserId(userId uint) (*models.Session, error) {
 		return nil, err
 	}
 	return &session, nil
-
 }
 
 func (s *service) GetUser(username string) (*models.User, error) {

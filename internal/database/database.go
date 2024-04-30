@@ -22,6 +22,7 @@ type Service interface {
 	CreateUserSession(username string, userId uint) (*models.Session, error)
 	GetSession(token string) (*models.Session, error)
 	GetSessionByUserId(userId uint) (*models.Session, error)
+	DeleteSession(token string) error
 }
 
 type service struct {
