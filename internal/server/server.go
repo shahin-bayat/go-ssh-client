@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -14,21 +15,22 @@ import (
 )
 
 type Server struct {
-	port      int
-	db        database.Service
-	loginTmpl *template.Template
-	adminTmpl *template.Template
-	userTmpl  *template.Template
+	port int
+	db   database.Service
+	tmpl *template.Template
 }
 
 func NewServer() *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
+	tmpl, err := template.New("").ParseGlob("web/**/*.html")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	NewServer := &Server{
-		port:      port,
-		db:        database.New(),
-		loginTmpl: template.Must(template.ParseFiles("web/pages/login.html")),
-		adminTmpl: template.Must(template.ParseFiles("web/pages/admin.html")),
-		userTmpl:  template.Must(template.ParseFiles("web/pages/user.html")),
+		port: port,
+		db:   database.New(),
+		tmpl: tmpl,
 	}
 
 	server := &http.Server{

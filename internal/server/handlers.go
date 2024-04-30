@@ -8,20 +8,23 @@ import (
 )
 
 func (s *Server) ServeLoginPage(w http.ResponseWriter, r *http.Request) {
-	err := s.loginTmpl.Execute(w, nil)
+	loginTmpl := s.tmpl.Lookup("login.html")
+	err := loginTmpl.Execute(w, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
 }
 func (s *Server) ServerAdminPage(w http.ResponseWriter, r *http.Request) {
-	err := s.adminTmpl.Execute(w, nil)
+	adminTmpl := s.tmpl.Lookup("admin.html")
+	err := adminTmpl.Execute(w, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 func (s *Server) ServeUserPage(w http.ResponseWriter, r *http.Request) {
-	err := s.userTmpl.Execute(w, nil)
+	userTmpl := s.tmpl.Lookup("user.html")
+	err := userTmpl.Execute(w, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -31,27 +34,28 @@ func (s *Server) Register(w http.ResponseWriter, r *http.Request) {
 	//	TODO: Implement registration
 }
 func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
+	loginTmpl := s.tmpl.Lookup("login.html")
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
 
 	if username == "" || password == "" {
-		utils.RenderError(w, s.loginTmpl, "validation-error", "username and password are required fields")
+		utils.RenderError(w, loginTmpl, "validation-error", "username and password are required fields")
 		return
 	}
 	existingUser, err := s.db.GetUser(username)
 	if err != nil {
-		utils.RenderError(w, s.loginTmpl, "validation-error", "invalid username or password")
+		utils.RenderError(w, loginTmpl, "validation-error", "invalid username or password")
 		return
 	}
 
 	if !utils.PasswordMatch(existingUser.Password, password) {
-		utils.RenderError(w, s.loginTmpl, "validation-error", "invalid password")
+		utils.RenderError(w, loginTmpl, "validation-error", "invalid password")
 		return
 	}
 
 	session, err := s.createOrGetSession(username, existingUser.ID)
 	if err != nil {
-		utils.RenderError(w, s.loginTmpl, "validation-error", "failed to create session")
+		utils.RenderError(w, loginTmpl, "validation-error", "failed to create session")
 		return
 	}
 

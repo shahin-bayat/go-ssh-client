@@ -9,18 +9,36 @@
         <title>Admin Dashboard</title>
     </head>
     <body>
-    <h1>Welcome to User Dashboard</h1>
+    <div class="flex flex-col">
+        {{template "navbar" .}}
 
-    <h2>Change Password</h2>
+        {{template "content" .}}
+    </div>
+    </body>
+    </html>
+{{ end }}
+
+
+
+
+{{ define "navbar" }}
+    <nav class="w-full bg-red-600">
+        <ul class="flex flex-row items-center">
+            <li><a href="/">Home</a></li>
+            <li><a href="/about">About</a></li>
+            <li><a href="/contact">Contact</a></li>
+        </ul>
+    </nav>
+{{ end }}
+
+
+{{define "content" }}
     <form method="post">
         <input type="text" name="username" placeholder="Username" required><br>
         <input type="password" name="password" placeholder="New Password" required><br>
         <input type="password" name="confirmPassword" placeholder="Confirm Password" required><br>
         <button type="submit">Create User</button>
     </form>
-    <button type="button" hx-post="/logout">Logout</button>
-    </body>
-    </html>
-{{ end }}
+{{end}}
 
 
