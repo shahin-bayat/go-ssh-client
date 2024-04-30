@@ -1,54 +1,48 @@
 package server
 
 import (
+	"github.com/labstack/echo/v4"
 	"github.com/shahin-bayat/go-ssh-client/internal/utils"
 	"net/http"
 	"time"
 )
 
-func (s *Server) requireRole(role []string, next http.Handler) http.Handler {
-	return http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			c, err := r.Cookie("session")
-			redirectTo := "/"
-			if err != nil {
-				http.Redirect(w, r, redirectTo, http.StatusSeeOther)
-				return
-			}
+func (s *Server) requireRole(role []string, next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		cookie, err := c.Cookie("session")
+		redirectTo := "/"
+		if err != nil {
+			return c.Redirect(http.StatusSeeOther, redirectTo)
+		}
 
-			sessionToken := c.Value
-			session, err := s.db.GetSession(sessionToken)
-			if err != nil {
-				http.Redirect(w, r, redirectTo, http.StatusSeeOther)
-				return
-			}
+		sessionToken := cookie.Value
+		session, err := s.db.GetSession(sessionToken)
+		if err != nil {
+			return c.Redirect(http.StatusSeeOther, redirectTo)
+		}
 
-			if session.ExpiresAt.Before(time.Now()) {
-				http.Redirect(w, r, redirectTo, http.StatusSeeOther)
-				return
-			}
+		if session.ExpiresAt.Before(time.Now()) {
+			return c.Redirect(http.StatusSeeOther, redirectTo)
+		}
 
-			existingUser, err := s.db.GetUserById(session.UserID)
-			if err != nil {
-				http.Redirect(w, r, redirectTo, http.StatusSeeOther)
-				return
-			}
+		existingUser, err := s.db.GetUserById(session.UserID)
+		if err != nil {
+			return c.Redirect(http.StatusSeeOther, redirectTo)
+		}
 
-			// Check if user has the required role
-			if !utils.SliceHas(existingUser.Role, role) {
-				http.Redirect(w, r, redirectTo, http.StatusSeeOther)
-				return
-			}
+		// Check if user has the required role
+		if !utils.SliceHas(existingUser.Role, role) {
+			c.Redirect(http.StatusSeeOther, redirectTo)
+		}
 
-			next.ServeHTTP(w, r)
-		},
-	)
+		return next(c)
+	}
 }
 
-func (s *Server) AdminOnly(next http.Handler) http.Handler {
+func (s *Server) AdminOnly(next echo.HandlerFunc) echo.HandlerFunc {
 	return s.requireRole([]string{"admin"}, next)
 }
 
-func (s *Server) Auth(next http.Handler) http.Handler {
+func (s *Server) Auth(next echo.HandlerFunc) echo.HandlerFunc {
 	return s.requireRole([]string{"admin", "user"}, next)
 }

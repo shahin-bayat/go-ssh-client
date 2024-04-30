@@ -1,34 +1,35 @@
 package server
 
 import (
-	"encoding/json"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"net/http"
 )
 
-func (s *Server) RegisterRoutes() http.Handler {
-	r := chi.NewRouter()
-	r.Use(middleware.Logger)
-	r.Get("/health", s.healthHandler)
+func (s *Server) RegisterRoutes() *echo.Echo {
+	e := echo.New()
+	e.Use(middleware.Logger())
+
+	e.Static("/static", "web/static")
+
+	// Template engine
+	e.Renderer = NewTemplate()
+
+	e.GET("/health", s.healthHandler)
 
 	// Template routes
-	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("./web/static"))))
-	r.Get("/", s.ServeLoginPage)
-	r.With(s.AdminOnly).Get("/admin", s.ServerAdminPage)
-	r.With(s.Auth).Get("/user", s.ServeUserPage)
+	e.GET("/", s.ServeLoginPage)
+	e.GET("/admin", s.ServerAdminPage, s.AdminOnly)
+	e.GET("/user", s.ServeUserPage, s.Auth)
 
-	r.With(s.AdminOnly).Post("/register", s.Register)
-	r.Post("/login", s.Login)
-	r.Post("/logout", s.Logout)
+	e.POST("/register", s.Register, s.AdminOnly)
+	e.POST("/login", s.Login)
+	e.POST("/logout", s.Logout)
 
-	return r
+	return e
 }
 
-func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+func (s *Server) healthHandler(c echo.Context) error {
 	response := s.db.Health()
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	return c.JSON(http.StatusOK, response)
 }

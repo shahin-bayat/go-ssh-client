@@ -1,66 +1,53 @@
 package server
 
 import (
+	"github.com/labstack/echo/v4"
 	"github.com/shahin-bayat/go-ssh-client/internal/models"
 	"github.com/shahin-bayat/go-ssh-client/internal/utils"
 	"net/http"
 	"time"
 )
 
-func (s *Server) ServeLoginPage(w http.ResponseWriter, r *http.Request) {
-	loginTmpl := s.tmpl.Lookup("login.html")
-	err := loginTmpl.Execute(w, nil)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+func (s *Server) ServeLoginPage(c echo.Context) error {
+	return c.Render(http.StatusOK, "login.html", nil)
 
 }
-func (s *Server) ServerAdminPage(w http.ResponseWriter, r *http.Request) {
-	adminTmpl := s.tmpl.Lookup("admin.html")
-	err := adminTmpl.Execute(w, nil)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+func (s *Server) ServerAdminPage(c echo.Context) error {
+	return c.Render(http.StatusOK, "admin.html", nil)
 }
-func (s *Server) ServeUserPage(w http.ResponseWriter, r *http.Request) {
-	userTmpl := s.tmpl.Lookup("user.html")
-	err := userTmpl.Execute(w, nil)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+func (s *Server) ServeUserPage(c echo.Context) error {
+	return c.Render(http.StatusOK, "user.html", nil)
 }
 
-func (s *Server) Register(w http.ResponseWriter, r *http.Request) {
+func (s *Server) Register(c echo.Context) error {
 	//	TODO: Implement registration
+	return nil
 }
-func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
-	loginTmpl := s.tmpl.Lookup("login.html")
-	username := r.PostFormValue("username")
-	password := r.PostFormValue("password")
+func (s *Server) Login(c echo.Context) error {
+	username := c.FormValue("username")
+	password := c.FormValue("password")
 
 	if username == "" || password == "" {
-		utils.RenderError(w, loginTmpl, "validation-error", "username and password are required fields")
-		return
+		return c.Render(
+			http.StatusBadRequest, "error", utils.ErrorResponse{Error: "username and password are required"},
+		)
 	}
 	existingUser, err := s.db.GetUser(username)
 	if err != nil {
-		utils.RenderError(w, loginTmpl, "validation-error", "invalid username or password")
-		return
+		return c.Render(http.StatusUnauthorized, "error", utils.ErrorResponse{Error: "invalid username"})
 	}
 
 	if !utils.PasswordMatch(existingUser.Password, password) {
-		utils.RenderError(w, loginTmpl, "validation-error", "invalid password")
-		return
+		return c.Render(http.StatusUnauthorized, "error", utils.ErrorResponse{Error: "invalid password"})
 	}
 
 	session, err := s.createOrGetSession(username, existingUser.ID)
 	if err != nil {
-		utils.RenderError(w, loginTmpl, "validation-error", "failed to create session")
-		return
+		return c.Render(http.StatusInternalServerError, "error", utils.ErrorResponse{Error: "failed to create session"})
 	}
 
-	http.SetCookie(
-		w, &http.Cookie{
+	c.SetCookie(
+		&http.Cookie{
 			Name:     "session",
 			Value:    session.Token,
 			Expires:  session.ExpiresAt,
@@ -71,36 +58,38 @@ func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
 	if existingUser.Role == "admin" {
 		redirectTo = "/admin"
 	}
-	w.Header().Set("HX-Redirect", redirectTo)
+	c.Response().Header().Set("HX-Redirect", redirectTo)
+	return nil
 }
 
-func (s *Server) Logout(w http.ResponseWriter, r *http.Request) {
-	c, err := r.Cookie("session")
+func (s *Server) Logout(c echo.Context) error {
+	cookie, err := c.Cookie("session")
 	if err != nil {
-		w.Header().Set("HX-Redirect", "/")
-		return
+		c.Response().Header().Set("HX-Redirect", "/")
+		return err
 	}
-	http.SetCookie(
-		w, &http.Cookie{
+	c.SetCookie(
+		&http.Cookie{
 			Name:    "session",
 			Value:   "",
 			Expires: time.Now(),
 		},
 	)
 
-	sessionToken := c.Value
+	sessionToken := cookie.Value
 	_, err = s.db.GetSession(sessionToken)
 	if err != nil {
-		w.Header().Set("HX-Redirect", "/")
-		return
+		c.Response().Header().Set("HX-Redirect", "/")
+		return err
 	}
 	err = s.db.DeleteSession(sessionToken)
 	if err != nil {
-		w.Header().Set("HX-Redirect", "/")
-		return
+		c.Response().Header().Set("HX-Redirect", "/")
+		return err
 	}
 
-	w.Header().Set("HX-Redirect", "/")
+	c.Response().Header().Set("HX-Redirect", "/")
+	return nil
 }
 
 func (s *Server) createOrGetSession(username string, userID uint) (*models.Session, error) {
