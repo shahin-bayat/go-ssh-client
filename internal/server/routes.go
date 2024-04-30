@@ -22,7 +22,10 @@ func (s *Server) RegisterRoutes() *echo.Echo {
 	e.GET("/admin", s.ServerAdminPage, s.AdminOnly)
 	e.GET("/user", s.ServeUserPage, s.Auth)
 
+	// API routes
 	e.POST("/register", s.Register, s.AdminOnly)
+	e.GET("/users", s.GetUsers, s.AdminOnly)
+
 	e.POST("/login", s.Login)
 	e.POST("/logout", s.Logout)
 

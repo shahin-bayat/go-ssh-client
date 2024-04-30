@@ -41,7 +41,7 @@ func (s *Server) Login(c echo.Context) error {
 		return c.Render(http.StatusUnauthorized, "error", utils.ErrorResponse{Error: "invalid password"})
 	}
 
-	session, err := s.createOrGetSession(username, existingUser.ID)
+	session, err := s.createOrGetSession(existingUser.ID)
 	if err != nil {
 		return c.Render(http.StatusInternalServerError, "error", utils.ErrorResponse{Error: "failed to create session"})
 	}
@@ -61,7 +61,6 @@ func (s *Server) Login(c echo.Context) error {
 	c.Response().Header().Set("HX-Redirect", redirectTo)
 	return nil
 }
-
 func (s *Server) Logout(c echo.Context) error {
 	cookie, err := c.Cookie("session")
 	if err != nil {
@@ -91,12 +90,19 @@ func (s *Server) Logout(c echo.Context) error {
 	c.Response().Header().Set("HX-Redirect", "/")
 	return nil
 }
+func (s *Server) GetUsers(c echo.Context) error {
+	users, err := s.db.GetUsers()
+	if err != nil {
+		return c.Render(http.StatusInternalServerError, "error", utils.ErrorResponse{Error: "failed to get users"})
+	}
+	return c.Render(http.StatusOK, "users", users)
+}
 
-func (s *Server) createOrGetSession(username string, userID uint) (*models.Session, error) {
+func (s *Server) createOrGetSession(userID uint) (*models.Session, error) {
 	session, err := s.db.GetSessionByUserId(userID)
 	if err != nil || session.ExpiresAt.Before(time.Now()) {
 		// If there's no session or the session has expired, create a new one
-		return s.db.CreateUserSession(username, userID)
+		return s.db.CreateUserSession(userID)
 	}
 	return session, nil
 }

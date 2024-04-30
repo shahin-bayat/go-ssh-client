@@ -17,9 +17,10 @@ type Service interface {
 	Health() models.SuccessResponse
 	CreateUser(username, password, role string) error
 	GetUser(username string) (*models.User, error)
+	GetUsers() ([]models.User, error)
 	GetUserById(id uint) (*models.User, error)
 	CreateAdminUser(username, password string) error
-	CreateUserSession(username string, userId uint) (*models.Session, error)
+	CreateUserSession(userId uint) (*models.Session, error)
 	GetSession(token string) (*models.Session, error)
 	GetSessionByUserId(userId uint) (*models.Session, error)
 	DeleteSession(token string) error

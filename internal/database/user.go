@@ -9,9 +9,8 @@ import (
 )
 
 var (
-	ErrorGetUser           = errors.New("error getting user")
-	ErrorCreateAdminUser   = errors.New("error creating admin user")
-	ErrorCreateUserSession = errors.New("error creating user session")
+	ErrorGetUser         = errors.New("error getting user")
+	ErrorCreateAdminUser = errors.New("error creating admin user")
 )
 
 func (s *service) CreateAdminUser(username, password string) error {
@@ -45,7 +44,7 @@ func (s *service) CreateUser(username, password, role string) error {
 	return nil
 }
 
-func (s *service) CreateUserSession(username string, userId uint) (*models.Session, error) {
+func (s *service) CreateUserSession(userId uint) (*models.Session, error) {
 	expiresAt := time.Now().Add(time.Hour * 24 * 30)
 	sessionToken := uuid.NewString()
 
@@ -111,6 +110,23 @@ func (s *service) GetUser(username string) (*models.User, error) {
 		return nil, ErrorGetUser
 	}
 	return &user, nil
+}
+
+func (s *service) GetUsers() ([]models.User, error) {
+	var users []models.User
+	rows, err := s.db.Query(`SELECT * FROM users`)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var user models.User
+		err = rows.Scan(&user.ID, &user.Username, &user.Password, &user.Role, &user.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	return users, nil
 }
 
 func (s *service) GetUserById(id uint) (*models.User, error) {

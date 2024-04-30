@@ -3,11 +3,11 @@ package models
 import "time"
 
 type User struct {
-	ID        uint      `json:"id" db:"id"`
-	Username  string    `json:"username" db:"username"`
-	Password  string    `json:"-" db:"password"`
-	Role      string    `json:"role" db:"role"`
-	CreatedAt time.Time `json:"-" db:"created_at"`
+	ID        uint      `db:"id"`
+	Username  string    `db:"username"`
+	Password  string    `db:"password"`
+	Role      string    `db:"role"`
+	CreatedAt time.Time `db:"created_at"`
 }
 
 type SuccessResponse struct {
