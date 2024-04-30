@@ -1,106 +1,82 @@
 package server
 
 import (
+	"github.com/labstack/echo/v4"
 	"github.com/shahin-bayat/go-ssh-client/internal/models"
 	"github.com/shahin-bayat/go-ssh-client/internal/utils"
 	"net/http"
 	"time"
 )
 
-func (s *Server) ServeLoginPage(w http.ResponseWriter, r *http.Request) {
-	loginTmpl := s.tmpl.Lookup("login.html")
-	err := loginTmpl.Execute(w, nil)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-
-}
-func (s *Server) ServerAdminPage(w http.ResponseWriter, r *http.Request) {
-	adminTmpl := s.tmpl.Lookup("admin.html")
-	err := adminTmpl.Execute(w, nil)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-func (s *Server) ServeUserPage(w http.ResponseWriter, r *http.Request) {
-	userTmpl := s.tmpl.Lookup("user.html")
-	err := userTmpl.Execute(w, nil)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
 func (s *Server) Register(w http.ResponseWriter, r *http.Request) {
 	//	TODO: Implement registration
 }
-func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
-	loginTmpl := s.tmpl.Lookup("login.html")
-	username := r.PostFormValue("username")
-	password := r.PostFormValue("password")
+func (s *Server) Login(c echo.Context) error {
+	username := c.FormValue("username")
+	password := c.FormValue("password")
 
 	if username == "" || password == "" {
-		utils.RenderError(w, loginTmpl, "validation-error", "username and password are required fields")
-		return
+		return c.JSON(
+			http.StatusBadRequest, models.ErrorResponse{
+				Message: "username and password are required",
+			},
+		)
 	}
 	existingUser, err := s.db.GetUser(username)
+
 	if err != nil {
-		utils.RenderError(w, loginTmpl, "validation-error", "invalid username or password")
-		return
+		return c.JSON(http.StatusUnauthorized, models.ErrorResponse{Message: "invalid username or password"})
 	}
 
 	if !utils.PasswordMatch(existingUser.Password, password) {
-		utils.RenderError(w, loginTmpl, "validation-error", "invalid password")
-		return
+		return c.JSON(http.StatusUnauthorized, models.ErrorResponse{Message: "invalid username or password"})
 	}
 
 	session, err := s.createOrGetSession(username, existingUser.ID)
 	if err != nil {
-		utils.RenderError(w, loginTmpl, "validation-error", "failed to create session")
-		return
+		return c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: "error creating session"})
 	}
 
-	http.SetCookie(
-		w, &http.Cookie{
+	c.SetCookie(
+		&http.Cookie{
 			Name:     "session",
 			Value:    session.Token,
 			Expires:  session.ExpiresAt,
 			HttpOnly: true,
 		},
 	)
-	redirectTo := "/user"
-	if existingUser.Role == "admin" {
-		redirectTo = "/admin"
-	}
-	w.Header().Set("HX-Redirect", redirectTo)
+	//redirectTo := "/user"
+	//if existingUser.Role == "admin" {
+	//	redirectTo = "/admin"
+	//}
+	return c.JSON(http.StatusOK, models.SuccessResponse{Message: "login successful"})
+	//return c.Redirect(http.StatusFound, "/admin")
 }
 
-func (s *Server) Logout(w http.ResponseWriter, r *http.Request) {
-	c, err := r.Cookie("session")
+func (s *Server) Logout(c echo.Context) error {
+	cookie, err := c.Cookie("session")
 	if err != nil {
-		w.Header().Set("HX-Redirect", "/")
-		return
+		return c.Redirect(http.StatusFound, "/")
 	}
-	http.SetCookie(
-		w, &http.Cookie{
+	c.SetCookie(
+		&http.Cookie{
 			Name:    "session",
 			Value:   "",
 			Expires: time.Now(),
 		},
 	)
 
-	sessionToken := c.Value
+	sessionToken := cookie.Value
 	_, err = s.db.GetSession(sessionToken)
 	if err != nil {
-		w.Header().Set("HX-Redirect", "/")
-		return
+		return c.Redirect(http.StatusFound, "/")
 	}
 	err = s.db.DeleteSession(sessionToken)
 	if err != nil {
-		w.Header().Set("HX-Redirect", "/")
-		return
+		return c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: "error deleting session"})
 	}
 
-	w.Header().Set("HX-Redirect", "/")
+	return c.Redirect(http.StatusFound, "/")
 }
 
 func (s *Server) createOrGetSession(username string, userID uint) (*models.Session, error) {

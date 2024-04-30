@@ -12,6 +12,11 @@ type User struct {
 
 type SuccessResponse struct {
 	Message string `json:"message"`
+	data    interface{}
+}
+
+type ErrorResponse struct {
+	Message string `json:"error"`
 }
 
 type Session struct {

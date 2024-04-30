@@ -1,34 +1,29 @@
 package server
 
 import (
-	"encoding/json"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"github.com/shahin-bayat/go-ssh-client/web"
 	"net/http"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
-	r := chi.NewRouter()
-	r.Use(middleware.Logger)
-	r.Get("/health", s.healthHandler)
+	e := echo.New()
+	// Register Web Handlers
+	web.RegisterHandlers(e)
+	// Register Middlewares
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
 
-	// Template routes
-	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("./web/static"))))
-	r.Get("/", s.ServeLoginPage)
-	r.With(s.AdminOnly).Get("/admin", s.ServerAdminPage)
-	r.With(s.Auth).Get("/user", s.ServeUserPage)
+	// Register API Handlers
+	e.GET("/health", s.healthHandler)
+	//e.Post("/register", s.Register)
+	e.POST("/login", s.Login)
+	e.POST("/logout", s.Logout)
 
-	r.With(s.AdminOnly).Post("/register", s.Register)
-	r.Post("/login", s.Login)
-	r.Post("/logout", s.Logout)
-
-	return r
+	return e
 }
 
-func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	response := s.db.Health()
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+func (s *Server) healthHandler(c echo.Context) error {
+	return c.JSON(http.StatusOK, s.db.Health())
 }

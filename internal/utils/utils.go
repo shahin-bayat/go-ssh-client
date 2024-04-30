@@ -3,9 +3,6 @@ package utils
 import (
 	"fmt"
 	"golang.org/x/crypto/bcrypt"
-	"html/template"
-	"log"
-	"net/http"
 	"os/exec"
 )
 
@@ -44,13 +41,6 @@ func CreateSSHUser(username, password string) error {
 	}
 
 	return nil
-}
-
-func RenderError(w http.ResponseWriter, template *template.Template, block, message string) {
-	err := template.ExecuteTemplate(w, block, ErrorResponse{Error: message})
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
 func SliceHas(val string, slice []string) bool {
