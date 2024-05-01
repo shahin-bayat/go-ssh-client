@@ -15,16 +15,19 @@ func (s *Server) RegisterRoutes() *echo.Echo {
 	// Template engine
 	e.Renderer = NewTemplate()
 
+	// Health check
 	e.GET("/health", s.healthHandler)
 
 	// Template routes
 	e.GET("/", s.ServeLoginPage)
-	e.GET("/admin", s.ServerAdminPage, s.AdminOnly)
+	e.GET("/admin/dashboard", s.ServerAdminPage, s.AdminOnly)
+	e.GET("/admin/users", s.ServeAdminUsersPage, s.AdminOnly)
 	e.GET("/user", s.ServeUserPage, s.Auth)
 
 	// API routes
 	e.POST("/register", s.Register, s.AdminOnly)
 	e.GET("/users", s.GetUsers, s.AdminOnly)
+	e.POST("/change-password", s.ChangePassword, s.Auth)
 
 	e.POST("/login", s.Login)
 	e.POST("/logout", s.Logout)

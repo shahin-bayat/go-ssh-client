@@ -1,0 +1,64 @@
+{{ define "admin-users"  }}
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+        <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/response-targets.js"></script>
+        <link rel="stylesheet" href="/static/output.css">
+        <title>Users</title>
+    </head>
+    <body>
+    <div class="flex h-screen">
+        {{template "admin-sidebar" .}}
+        <div id="content" class="flex-1 bg-gray-100 p-12">
+            {{block "users" .}}
+                <h1 class="text-2xl font-semibold text-gray-900 mb-4">Users:</h1>
+                <div class="overflow-x-auto">
+                    <table class="w-full whitespace-nowrap bg-white divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Id
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Username
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Role
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Created At
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                        {{range .}}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">{{.ID}}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">{{.Username}}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">{{.Role}}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">{{.CreatedAt.Format "2006-01-02 15:04"}}</td>
+                            </tr>
+                        {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            {{end}}
+        </div>
+    </div>
+    </body>
+    </html>
+{{ end }}
+
+
+
+
+
+
+

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/shahin-bayat/go-ssh-client/internal/models"
 	"github.com/shahin-bayat/go-ssh-client/internal/utils"
@@ -9,14 +10,73 @@ import (
 )
 
 func (s *Server) ServeLoginPage(c echo.Context) error {
-	return c.Render(http.StatusOK, "login.html", nil)
+	return c.Render(http.StatusOK, "login", nil)
 
 }
 func (s *Server) ServerAdminPage(c echo.Context) error {
-	return c.Render(http.StatusOK, "admin.html", nil)
+	return c.Render(http.StatusOK, "admin-dashboard", nil)
+}
+
+func (s *Server) ServeAdminUsersPage(c echo.Context) error {
+	users, err := s.db.GetUsers()
+	if err != nil {
+		return c.Render(http.StatusInternalServerError, "error", utils.ErrorResponse{Error: "failed to get users"})
+	}
+	return c.Render(http.StatusOK, "admin-users", users)
 }
 func (s *Server) ServeUserPage(c echo.Context) error {
-	return c.Render(http.StatusOK, "user.html", nil)
+	return c.Render(http.StatusOK, "user-dashboard", nil)
+}
+
+func (s *Server) ChangePassword(c echo.Context) error {
+	username := c.FormValue("username")
+	currentPassword := c.FormValue("current-password")
+	newPassword := c.FormValue("password")
+	confirmPassword := c.FormValue("confirm-password")
+
+	fmt.Println(username, currentPassword, newPassword, confirmPassword)
+
+	if username == "" || currentPassword == "" || newPassword == "" || confirmPassword == "" {
+		return c.Render(
+			http.StatusBadRequest, "change-password-error", utils.ErrorResponse{Error: "all fields are required"},
+		)
+	}
+	if newPassword != confirmPassword {
+		return c.Render(
+			http.StatusBadRequest, "change-password-error", utils.ErrorResponse{Error: "passwords do not match"},
+		)
+	}
+	if len(newPassword) < 6 {
+		return c.Render(
+			http.StatusBadRequest, "change-password-error",
+			utils.ErrorResponse{Error: "password must be at least 6 characters"},
+		)
+	}
+	existingUser, err := s.db.GetUser(username)
+	if err != nil {
+		return c.Render(
+			http.StatusUnauthorized, "change-password-error", utils.ErrorResponse{Error: "invalid username"},
+		)
+	}
+	if !utils.PasswordMatch(existingUser.Password, currentPassword) {
+		return c.Render(
+			http.StatusUnauthorized, "change-password-error", utils.ErrorResponse{Error: "invalid password"},
+		)
+	}
+
+	err = s.db.UpdateUserPassword(existingUser.ID, newPassword)
+	if err != nil {
+		return c.Render(
+			http.StatusInternalServerError, "change-password-error",
+			utils.ErrorResponse{Error: "failed to update password"},
+		)
+	}
+
+	// if user is not an admin, update the SSH user password
+	if existingUser.Role != "admin" {
+		// TODO: Implement password change for SSH user
+	}
+	return err
 }
 
 func (s *Server) Register(c echo.Context) error {
@@ -54,9 +114,9 @@ func (s *Server) Login(c echo.Context) error {
 			HttpOnly: true,
 		},
 	)
-	redirectTo := "/user"
+	redirectTo := "/user/dashboard"
 	if existingUser.Role == "admin" {
-		redirectTo = "/admin"
+		redirectTo = "/admin/dashboard"
 	}
 	c.Response().Header().Set("HX-Redirect", redirectTo)
 	return nil

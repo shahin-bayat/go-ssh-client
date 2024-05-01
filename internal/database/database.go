@@ -19,7 +19,7 @@ type Service interface {
 	GetUser(username string) (*models.User, error)
 	GetUsers() ([]models.User, error)
 	GetUserById(id uint) (*models.User, error)
-	CreateAdminUser(username, password string) error
+	UpdateUserPassword(userId uint, password string) error
 	CreateUserSession(userId uint) (*models.Session, error)
 	GetSession(token string) (*models.Session, error)
 	GetSessionByUserId(userId uint) (*models.Session, error)

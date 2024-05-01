@@ -1,0 +1,37 @@
+{{ define "admin-dashboard" }}
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+        <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/response-targets.js"></script>
+        <link rel="stylesheet" href="/static/output.css">
+        <title>Admin Dashboard</title>
+    </head>
+    <body>
+    <div class="flex h-screen">
+        {{template "admin-sidebar" .}}
+
+        <div id="content" class="flex-col flex-1 bg-gray-100 p-12">
+            <div>
+                <h1 class="text-3xl">Dashboard</h1>
+                <p>Welcome to the admin dashboard</p>
+                <p>Please don't forget to change your password.</p>
+            </div>
+            {{template "change-password" .}}
+        </div>
+    </div>
+    </body>
+    </html>
+{{ end }}
+
+
+
+
+
+
+
+
+
+

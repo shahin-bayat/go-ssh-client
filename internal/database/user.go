@@ -4,36 +4,12 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	"github.com/shahin-bayat/go-ssh-client/internal/models"
-	"github.com/shahin-bayat/go-ssh-client/internal/utils"
 	"time"
 )
 
 var (
-	ErrorGetUser         = errors.New("error getting user")
-	ErrorCreateAdminUser = errors.New("error creating admin user")
+	ErrorGetUser = errors.New("error getting user")
 )
-
-func (s *service) CreateAdminUser(username, password string) error {
-	hashedPassword, err := utils.HashPassword(password)
-	if err != nil {
-		return err
-	}
-	var count int
-	err = s.db.QueryRow("SELECT COUNT(*) FROM users").Scan(&count)
-	if err != nil {
-		return ErrorCreateAdminUser
-	}
-	if count == 0 {
-		_, err = s.db.Exec(
-			`INSERT INTO users (username, password, role) VALUES ($1, $2, $3)`, username, hashedPassword, "admin",
-		)
-		if err != nil {
-			return ErrorCreateAdminUser
-		}
-	}
-
-	return nil
-}
 
 func (s *service) CreateUser(username, password, role string) error {
 	_, err := s.db.Exec(`INSERT INTO users (username, password, role) VALUES ($1, $2, $3)`, username, password, role)
@@ -110,6 +86,14 @@ func (s *service) GetUser(username string) (*models.User, error) {
 		return nil, ErrorGetUser
 	}
 	return &user, nil
+}
+
+func (s *service) UpdateUserPassword(userId uint, password string) error {
+	_, err := s.db.Exec(`UPDATE users SET password = $1 WHERE id = $2`, password, userId)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *service) GetUsers() ([]models.User, error) {
