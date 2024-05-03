@@ -1,20 +1,24 @@
 package server
 
 import (
-	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/labstack/echo/v4"
 	"github.com/shahin-bayat/go-ssh-client/internal/models"
 	"github.com/shahin-bayat/go-ssh-client/internal/utils"
-	"net/http"
-	"time"
+	"github.com/shahin-bayat/go-ssh-client/views/components"
+	"github.com/shahin-bayat/go-ssh-client/views/pages"
 )
 
 func (s *Server) ServeLoginPage(c echo.Context) error {
-	return c.Render(http.StatusOK, "login", nil)
+	component := pages.Login()
+	return component.Render(c.Request().Context(), c.Response().Writer)
 
 }
 func (s *Server) ServerAdminPage(c echo.Context) error {
-	return c.Render(http.StatusOK, "admin-dashboard", nil)
+	component := pages.Admin()
+	return component.Render(c.Request().Context(), c.Response().Writer)
 }
 
 func (s *Server) ServeAdminUsersPage(c echo.Context) error {
@@ -22,7 +26,9 @@ func (s *Server) ServeAdminUsersPage(c echo.Context) error {
 	if err != nil {
 		return c.Render(http.StatusInternalServerError, "error", utils.ErrorResponse{Error: "failed to get users"})
 	}
-	return c.Render(http.StatusOK, "admin-users", users)
+	component := pages.Users(users)
+	return component.Render(c.Request().Context(), c.Response().Writer)
+
 }
 func (s *Server) ServeUserPage(c echo.Context) error {
 	return c.Render(http.StatusOK, "user-dashboard", nil)
@@ -34,7 +40,7 @@ func (s *Server) ChangePassword(c echo.Context) error {
 	newPassword := c.FormValue("password")
 	confirmPassword := c.FormValue("confirm-password")
 
-	fmt.Println(username, currentPassword, newPassword, confirmPassword)
+	component := components.ChangePassword()
 
 	if username == "" || currentPassword == "" || newPassword == "" || confirmPassword == "" {
 		return c.Render(
