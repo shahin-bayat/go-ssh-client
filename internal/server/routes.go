@@ -18,8 +18,9 @@ func (s *Server) RegisterRoutes() *echo.Echo {
 
 	// Template routes
 	e.GET("/", s.ServeLoginPage)
-	e.GET("/admin/dashboard", s.ServerAdminPage, s.AdminOnly)
-	e.GET("/admin/users", s.ServeAdminUsersPage, s.AdminOnly)
+	e.GET("/admin/dashboard", s.ServeAdminPage, s.AdminOnly)
+	e.GET("/admin/users", s.ServeUsersPage, s.AdminOnly)
+	e.GET("/admin/settings", s.ServeSettingsPage, s.AdminOnly)
 
 	// API routes
 	e.POST("/change-password", s.ChangePassword, s.Auth)

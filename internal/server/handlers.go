@@ -17,13 +17,12 @@ func (s *Server) ServeLoginPage(c echo.Context) error {
 	return component.Render(c.Request().Context(), c.Response().Writer)
 
 }
-func (s *Server) ServerAdminPage(c echo.Context) error {
+func (s *Server) ServeAdminPage(c echo.Context) error {
 	component := pages.Admin()
 	return layouts.Admin("Dashboard", component).Render(c.Request().Context(), c.Response().Writer)
 }
 
-func (s *Server) ServeAdminUsersPage(c echo.Context) error {
-
+func (s *Server) ServeUsersPage(c echo.Context) error {
 	users, err := s.db.GetUsers()
 	if err != nil {
 		return c.Render(http.StatusInternalServerError, "error", utils.ErrorResponse{Error: "failed to get users"})
@@ -31,6 +30,10 @@ func (s *Server) ServeAdminUsersPage(c echo.Context) error {
 	component := pages.Users(users)
 	return layouts.Admin("Users", component).Render(c.Request().Context(), c.Response().Writer)
 
+}
+func (s *Server) ServeSettingsPage(c echo.Context) error {
+	component := pages.Settings()
+	return layouts.Admin("Settings", component).Render(c.Request().Context(), c.Response().Writer)
 }
 
 func (s *Server) ChangePassword(c echo.Context) error {
