@@ -1,0 +1,29 @@
+package layouts
+
+templ Admin(title string, component templ.Component) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<script src="https://unpkg.com/htmx.org@1.9.12"></script>
+			<script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/response-targets.js"></script>
+			<link rel="stylesheet" href="/static/output.css"/>
+			<title>{ title }</title>
+		</head>
+		<body>
+			<div class="flex h-screen">
+				<nav class="h-full bg-blue-900 text-gray-100 min-w-48 py-12">
+					<div class="flex flex-col" hx-boost="true">
+						<a href="/admin/dashboard" class="w-full cursor-pointer hover:bg-blue-600 px-6 py-3">Dashboard</a>
+						<a href="/admin/users" class="w-full cursor-pointer hover:bg-blue-600 px-6 py-3">Users</a>
+						<a href="/admin/settings" class="w-full cursor-pointer hover:bg-blue-600 px-6 py-3">Panel Settings</a>
+					</div>
+				</nav>
+				<div id="content" class="flex-col flex-1 bg-gray-100 p-12">
+					@component
+				</div>
+			</div>
+		</body>
+	</html>
+}

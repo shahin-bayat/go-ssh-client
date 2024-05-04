@@ -42,4 +42,4 @@ watch:
 .PHONY: all build run test clean
 
 tailwind:
-	cd views && npx tailwindcss -i input.css -o static/output.css --watch
+	npx tailwindcss -i ./views/input.css -o ./views/static/output.css --watch

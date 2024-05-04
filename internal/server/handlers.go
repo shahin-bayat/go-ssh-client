@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/shahin-bayat/go-ssh-client/views/layouts"
 	"net/http"
 	"time"
 
@@ -18,16 +19,17 @@ func (s *Server) ServeLoginPage(c echo.Context) error {
 }
 func (s *Server) ServerAdminPage(c echo.Context) error {
 	component := pages.Admin()
-	return component.Render(c.Request().Context(), c.Response().Writer)
+	return layouts.Admin("Dashboard", component).Render(c.Request().Context(), c.Response().Writer)
 }
 
 func (s *Server) ServeAdminUsersPage(c echo.Context) error {
+
 	users, err := s.db.GetUsers()
 	if err != nil {
 		return c.Render(http.StatusInternalServerError, "error", utils.ErrorResponse{Error: "failed to get users"})
 	}
 	component := pages.Users(users)
-	return component.Render(c.Request().Context(), c.Response().Writer)
+	return layouts.Admin("Users", component).Render(c.Request().Context(), c.Response().Writer)
 
 }
 
@@ -54,12 +56,12 @@ func (s *Server) ChangePassword(c echo.Context) error {
 	}
 	existingUser, err := s.db.GetUser(username)
 	if err != nil {
-		component := components.Error("invalid username")
+		component := components.Error("invalid credentials")
 		c.Response().WriteHeader(http.StatusUnauthorized)
 		return component.Render(c.Request().Context(), c.Response().Writer)
 	}
 	if !utils.PasswordMatch(existingUser.Password, currentPassword) {
-		component := components.Error("invalid password")
+		component := components.Error("invalid credentials")
 		c.Response().WriteHeader(http.StatusUnauthorized)
 		return component.Render(c.Request().Context(), c.Response().Writer)
 	}

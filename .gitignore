@@ -31,3 +31,6 @@ app
 *.db
 
 node_modules/
+/views/package.json
+/views/package-lock.json
+/views/node_modules/
