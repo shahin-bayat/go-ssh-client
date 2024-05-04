@@ -23,7 +23,7 @@ func CreateUser() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div><form hx-post=\"/user\" hx-ext=\"response-targets\"><div class=\"flex flex-row gap-4\"><input type=\"text\" name=\"username\" placeholder=\"Username\" class=\"bg-gray-100 p-2 my-3 border-2 rounded\"> <input type=\"password\" name=\"password\" placeholder=\"Password\" class=\"bg-gray-100 p-2 my-3 border-2 rounded\"> <input type=\"text\" name=\"role\" placeholder=\"Role\" class=\"bg-gray-100 p-2 my-3 border-2 rounded\"> <button type=\"submit\" class=\"bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded my-3\">New User </button><div id=\"create-user-error\"></div></div></form></div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-post=\"/user\" hx-ext=\"response-targets\"><div class=\"flex flex-row gap-4\"><input type=\"text\" name=\"username\" placeholder=\"Username\" class=\"bg-gray-100 p-2 my-3 border-2 rounded\"> <input type=\"password\" name=\"password\" placeholder=\"Password\" class=\"bg-gray-100 p-2 my-3 border-2 rounded\"> <input type=\"text\" name=\"role\" placeholder=\"Role\" class=\"bg-gray-100 p-2 my-3 border-2 rounded\"> <button type=\"submit\" class=\"bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded my-3\">New User </button><div id=\"create-user-error\"></div></div></form>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

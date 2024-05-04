@@ -1,0 +1,9 @@
+package components
+
+templ Input(inputName, inputType, inputLabel  string) {
+<div class="relative">
+  <label for="inputName" class="text-sm text-gray-600" >{inputLabel}</label>
+  <input type={inputType} name={inputName} placeholder={inputLabel} id={inputName} class="block w-full bg-gray-100 p-2 border-2 rounded focus:outline-none focus:border-blue-500 placeholder-transparent"/>
+</div>
+
+}

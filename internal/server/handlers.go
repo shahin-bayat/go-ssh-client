@@ -43,42 +43,42 @@ func (s *Server) ChangePassword(c echo.Context) error {
 	confirmPassword := c.FormValue("confirm-password")
 
 	if username == "" || currentPassword == "" || newPassword == "" || confirmPassword == "" {
-		component := components.Error("all fields are required")
+		component := components.Alert("all fields are required", "")
 		c.Response().WriteHeader(http.StatusBadRequest)
 		return component.Render(c.Request().Context(), c.Response().Writer)
 	}
 	if newPassword != confirmPassword {
-		component := components.Error("passwords do not match")
+		component := components.Alert("passwords do not match", "")
 		c.Response().WriteHeader(http.StatusBadRequest)
 		return component.Render(c.Request().Context(), c.Response().Writer)
 	}
 	if len(newPassword) < 6 {
-		component := components.Error("password must be at least 6 characters long")
+		component := components.Alert("password must be at least 6 characters long", "")
 		c.Response().WriteHeader(http.StatusBadRequest)
 		return component.Render(c.Request().Context(), c.Response().Writer)
 	}
 	existingUser, err := s.db.GetUser(username)
 	if err != nil {
-		component := components.Error("invalid credentials")
+		component := components.Alert("invalid credentials", "")
 		c.Response().WriteHeader(http.StatusUnauthorized)
 		return component.Render(c.Request().Context(), c.Response().Writer)
 	}
 	if !utils.PasswordMatch(existingUser.Password, currentPassword) {
-		component := components.Error("invalid credentials")
+		component := components.Alert("invalid credentials", "")
 		c.Response().WriteHeader(http.StatusUnauthorized)
 		return component.Render(c.Request().Context(), c.Response().Writer)
 	}
 
 	hashedPassword, err := utils.HashPassword(newPassword)
 	if err != nil {
-		component := components.Error("internal server error")
+		component := components.Alert("internal server error", "")
 		c.Response().WriteHeader(http.StatusInternalServerError)
 		return component.Render(c.Request().Context(), c.Response().Writer)
 	}
 
 	err = s.db.UpdateUserPassword(existingUser.ID, hashedPassword)
 	if err != nil {
-		component := components.Error("internal server error")
+		component := components.Alert("internal server error", "")
 		c.Response().WriteHeader(http.StatusInternalServerError)
 		return component.Render(c.Request().Context(), c.Response().Writer)
 	}
@@ -87,7 +87,7 @@ func (s *Server) ChangePassword(c echo.Context) error {
 	if existingUser.Role != "admin" {
 		// TODO: Implement password change for SSH user
 	}
-	component := components.Success("password updated successfully")
+	component := components.Alert("", "password updated successfully")
 	c.Response().WriteHeader(http.StatusOK)
 	return component.Render(c.Request().Context(), c.Response().Writer)
 }
@@ -97,27 +97,27 @@ func (s *Server) Login(c echo.Context) error {
 	password := c.FormValue("password")
 
 	if username == "" || password == "" {
-		component := components.Error("all fields are required")
+		component := components.Alert("all fields are required", "")
 		c.Response().WriteHeader(http.StatusBadRequest)
 		return component.Render(c.Request().Context(), c.Response().Writer)
 
 	}
 	existingUser, err := s.db.GetUser(username)
 	if err != nil {
-		component := components.Error("invalid credentials")
+		component := components.Alert("invalid credentials", "")
 		c.Response().WriteHeader(http.StatusUnauthorized)
 		return component.Render(c.Request().Context(), c.Response().Writer)
 	}
 
 	if !utils.PasswordMatch(existingUser.Password, password) {
-		component := components.Error("invalid credentials")
+		component := components.Alert("invalid credentials", "")
 		c.Response().WriteHeader(http.StatusUnauthorized)
 		return component.Render(c.Request().Context(), c.Response().Writer)
 	}
 
 	session, err := s.createOrGetSession(existingUser.ID)
 	if err != nil {
-		component := components.Error("internal server error")
+		component := components.Alert("internal server error", "")
 		c.Response().WriteHeader(http.StatusInternalServerError)
 		return component.Render(c.Request().Context(), c.Response().Writer)
 	}
