@@ -30,9 +30,6 @@ func (s *Server) ServeAdminUsersPage(c echo.Context) error {
 	return component.Render(c.Request().Context(), c.Response().Writer)
 
 }
-func (s *Server) ServeUserPage(c echo.Context) error {
-	return c.Render(http.StatusOK, "user-dashboard", nil)
-}
 
 func (s *Server) ChangePassword(c echo.Context) error {
 	username := c.FormValue("username")
@@ -40,76 +37,84 @@ func (s *Server) ChangePassword(c echo.Context) error {
 	newPassword := c.FormValue("password")
 	confirmPassword := c.FormValue("confirm-password")
 
-	component := components.ChangePassword()
-
 	if username == "" || currentPassword == "" || newPassword == "" || confirmPassword == "" {
-		return c.Render(
-			http.StatusBadRequest, "change-password-error", utils.ErrorResponse{Error: "all fields are required"},
-		)
+		component := components.Error("all fields are required")
+		c.Response().WriteHeader(http.StatusBadRequest)
+		return component.Render(c.Request().Context(), c.Response().Writer)
 	}
 	if newPassword != confirmPassword {
-		return c.Render(
-			http.StatusBadRequest, "change-password-error", utils.ErrorResponse{Error: "passwords do not match"},
-		)
+		component := components.Error("passwords do not match")
+		c.Response().WriteHeader(http.StatusBadRequest)
+		return component.Render(c.Request().Context(), c.Response().Writer)
 	}
 	if len(newPassword) < 6 {
-		return c.Render(
-			http.StatusBadRequest, "change-password-error",
-			utils.ErrorResponse{Error: "password must be at least 6 characters"},
-		)
+		component := components.Error("password must be at least 6 characters long")
+		c.Response().WriteHeader(http.StatusBadRequest)
+		return component.Render(c.Request().Context(), c.Response().Writer)
 	}
 	existingUser, err := s.db.GetUser(username)
 	if err != nil {
-		return c.Render(
-			http.StatusUnauthorized, "change-password-error", utils.ErrorResponse{Error: "invalid username"},
-		)
+		component := components.Error("invalid username")
+		c.Response().WriteHeader(http.StatusUnauthorized)
+		return component.Render(c.Request().Context(), c.Response().Writer)
 	}
 	if !utils.PasswordMatch(existingUser.Password, currentPassword) {
-		return c.Render(
-			http.StatusUnauthorized, "change-password-error", utils.ErrorResponse{Error: "invalid password"},
-		)
+		component := components.Error("invalid password")
+		c.Response().WriteHeader(http.StatusUnauthorized)
+		return component.Render(c.Request().Context(), c.Response().Writer)
 	}
 
-	err = s.db.UpdateUserPassword(existingUser.ID, newPassword)
+	hashedPassword, err := utils.HashPassword(newPassword)
 	if err != nil {
-		return c.Render(
-			http.StatusInternalServerError, "change-password-error",
-			utils.ErrorResponse{Error: "failed to update password"},
-		)
+		component := components.Error("internal server error")
+		c.Response().WriteHeader(http.StatusInternalServerError)
+		return component.Render(c.Request().Context(), c.Response().Writer)
+	}
+
+	err = s.db.UpdateUserPassword(existingUser.ID, hashedPassword)
+	if err != nil {
+		component := components.Error("internal server error")
+		c.Response().WriteHeader(http.StatusInternalServerError)
+		return component.Render(c.Request().Context(), c.Response().Writer)
 	}
 
 	// if user is not an admin, update the SSH user password
 	if existingUser.Role != "admin" {
 		// TODO: Implement password change for SSH user
 	}
-	return err
+	component := components.Success("password updated successfully")
+	c.Response().WriteHeader(http.StatusOK)
+	return component.Render(c.Request().Context(), c.Response().Writer)
 }
 
-func (s *Server) Register(c echo.Context) error {
-	//	TODO: Implement registration
-	return nil
-}
 func (s *Server) Login(c echo.Context) error {
 	username := c.FormValue("username")
 	password := c.FormValue("password")
 
 	if username == "" || password == "" {
-		return c.Render(
-			http.StatusBadRequest, "error", utils.ErrorResponse{Error: "username and password are required"},
-		)
+		component := components.Error("all fields are required")
+		c.Response().WriteHeader(http.StatusBadRequest)
+		return component.Render(c.Request().Context(), c.Response().Writer)
+
 	}
 	existingUser, err := s.db.GetUser(username)
 	if err != nil {
-		return c.Render(http.StatusUnauthorized, "error", utils.ErrorResponse{Error: "invalid username"})
+		component := components.Error("invalid credentials")
+		c.Response().WriteHeader(http.StatusUnauthorized)
+		return component.Render(c.Request().Context(), c.Response().Writer)
 	}
 
 	if !utils.PasswordMatch(existingUser.Password, password) {
-		return c.Render(http.StatusUnauthorized, "error", utils.ErrorResponse{Error: "invalid password"})
+		component := components.Error("invalid credentials")
+		c.Response().WriteHeader(http.StatusUnauthorized)
+		return component.Render(c.Request().Context(), c.Response().Writer)
 	}
 
 	session, err := s.createOrGetSession(existingUser.ID)
 	if err != nil {
-		return c.Render(http.StatusInternalServerError, "error", utils.ErrorResponse{Error: "failed to create session"})
+		component := components.Error("internal server error")
+		c.Response().WriteHeader(http.StatusInternalServerError)
+		return component.Render(c.Request().Context(), c.Response().Writer)
 	}
 
 	c.SetCookie(
@@ -155,13 +160,6 @@ func (s *Server) Logout(c echo.Context) error {
 
 	c.Response().Header().Set("HX-Redirect", "/")
 	return nil
-}
-func (s *Server) GetUsers(c echo.Context) error {
-	users, err := s.db.GetUsers()
-	if err != nil {
-		return c.Render(http.StatusInternalServerError, "error", utils.ErrorResponse{Error: "failed to get users"})
-	}
-	return c.Render(http.StatusOK, "users", users)
 }
 
 func (s *Server) createOrGetSession(userID uint) (*models.Session, error) {

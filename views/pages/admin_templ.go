@@ -10,6 +10,8 @@ import "context"
 import "io"
 import "bytes"
 
+import "github.com/shahin-bayat/go-ssh-client/views/components"
+
 import "github.com/shahin-bayat/go-ssh-client/views/layouts"
 
 func Admin() templ.Component {
@@ -33,7 +35,23 @@ func Admin() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div id=\"content\" class=\"flex-col flex-1 bg-gray-100 p-12\"><div><h1 class=\"text-3xl\">Dashboard</h1><p>Welcome to the admin dashboard</p><p>Please don't forget to change your password.</p></div></div></div></body></html>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div id=\"content\" class=\"flex-1 bg-gray-100 p-12\"><div><h1 class=\"text-3xl\">Dashboard</h1><p>Welcome to the admin dashboard</p><p>Please don't forget to change your password.</p></div><div class=\"h-full\"><form hx-post=\"/change-password\" hx-ext=\"response-targets\" hx-target-error=\"#change-password-error\" hx-target=\"#change-password-success\" hx-on::after-request=\"this.reset()\" class=\"h-full\"><div class=\"flex flex-col gap-2 max-w-sm\"><input type=\"text\" name=\"username\" placeholder=\"Username\" class=\"bg-gray-100 p-2 my-3 border-2 rounded\"> <input type=\"password\" name=\"current-password\" placeholder=\"Current Password\" class=\"bg-gray-100 p-2 my-3 border-2 rounded\"> <input type=\"password\" name=\"password\" placeholder=\"New Password\" class=\"bg-gray-100 p-2 my-3 border-2 rounded\"> <input type=\"password\" name=\"confirm-password\" placeholder=\"Confirm Password\" class=\"bg-gray-100 p-2 my-3 border-2 rounded\"> <button type=\"submit\" class=\"bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded my-3\">Change Password</button><div id=\"change-password-error\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Error("").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div><div id=\"change-password-success\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Success("").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div></div></form></div></div></div></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
