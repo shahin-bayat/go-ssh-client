@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"github.com/shahin-bayat/go-ssh-client/views/layouts"
 	"net/http"
 	"time"
@@ -21,7 +22,6 @@ func (s *Server) ServeAdminPage(c echo.Context) error {
 	component := pages.Admin()
 	return layouts.Admin("Dashboard", component).Render(c.Request().Context(), c.Response().Writer)
 }
-
 func (s *Server) ServeUsersPage(c echo.Context) error {
 	users, err := s.db.GetUsers()
 	if err != nil {
@@ -88,6 +88,56 @@ func (s *Server) ChangePassword(c echo.Context) error {
 		// TODO: Implement password change for SSH user
 	}
 	component := components.Alert("", "password updated successfully")
+	c.Response().WriteHeader(http.StatusOK)
+	return component.Render(c.Request().Context(), c.Response().Writer)
+}
+func (s *Server) CreateUser(c echo.Context) error {
+	username := c.FormValue("username")
+	password := c.FormValue("password")
+	role := c.FormValue("role")
+
+	fmt.Println("Are we here?")
+	fmt.Println(username, password, role)
+
+	if username == "" || password == "" || role == "" {
+		component := components.Alert("all fields are required", "")
+		c.Response().WriteHeader(http.StatusBadRequest)
+		return component.Render(c.Request().Context(), c.Response().Writer)
+	}
+	if len(password) < 6 {
+		component := components.Alert("password must be at least 6 characters long", "")
+		c.Response().WriteHeader(http.StatusBadRequest)
+		return component.Render(c.Request().Context(), c.Response().Writer)
+	}
+	if role != "admin" && role != "user" {
+		component := components.Alert("invalid role", "")
+		c.Response().WriteHeader(http.StatusBadRequest)
+		return component.Render(c.Request().Context(), c.Response().Writer)
+	}
+	hashedPassword, err := utils.HashPassword(password)
+	if err != nil {
+		component := components.Alert("internal server error", "")
+		c.Response().WriteHeader(http.StatusInternalServerError)
+		return component.Render(c.Request().Context(), c.Response().Writer)
+	}
+	err = s.db.CreateUser(username, hashedPassword, role)
+	if err != nil {
+		component := components.Alert("internal server error", "")
+		c.Response().WriteHeader(http.StatusInternalServerError)
+		return component.Render(c.Request().Context(), c.Response().Writer)
+	}
+
+	if role == "user" {
+		err = utils.CreateSSHUser(username, password)
+		if err != nil {
+			component := components.Alert("internal server error", "")
+			c.Response().WriteHeader(http.StatusInternalServerError)
+			return component.Render(c.Request().Context(), c.Response().Writer)
+		}
+	}
+
+	component := components.Alert("", "user created successfully")
+	c.Response().Header().Set("HX-Refresh", "true")
 	c.Response().WriteHeader(http.StatusOK)
 	return component.Render(c.Request().Context(), c.Response().Writer)
 }

@@ -3,6 +3,8 @@ package pages
 import "github.com/shahin-bayat/go-ssh-client/internal/models"
 import "strconv"
 import "time"
+import "github.com/shahin-bayat/go-ssh-client/views/components"
+
 
 func formatTime(t time.Time) string {
 	return t.Format("2006-01-02 15:04:05")
@@ -14,6 +16,9 @@ func idToString(id uint) string {
 
 templ Users(users []models.User) {
 		<h1 class="text-2xl font-semibold text-gray-900 mb-4">Users:</h1>
+		<div class="flex flex-row my-2">
+           @components.Modal("Create User", components.CreateUserForm())
+        </div>
 		<div class="overflow-x-auto">
 			<table class="w-full whitespace-nowrap bg-white divide-y divide-gray-200">
 				<thead class="bg-gray-50">

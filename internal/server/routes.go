@@ -24,6 +24,7 @@ func (s *Server) RegisterRoutes() *echo.Echo {
 
 	// API routes
 	e.POST("/change-password", s.ChangePassword, s.Auth)
+	e.POST("/user", s.CreateUser, s.AdminOnly)
 	e.POST("/login", s.Login)
 	e.POST("/logout", s.Logout)
 

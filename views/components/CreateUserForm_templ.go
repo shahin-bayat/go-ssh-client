@@ -10,7 +10,7 @@ import "context"
 import "io"
 import "bytes"
 
-func CreateUser() templ.Component {
+func CreateUserForm() templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -23,7 +23,23 @@ func CreateUser() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-post=\"/user\" hx-ext=\"response-targets\"><div class=\"flex flex-row gap-4\"><input type=\"text\" name=\"username\" placeholder=\"Username\" class=\"bg-gray-100 p-2 my-3 border-2 rounded\"> <input type=\"password\" name=\"password\" placeholder=\"Password\" class=\"bg-gray-100 p-2 my-3 border-2 rounded\"> <input type=\"text\" name=\"role\" placeholder=\"Role\" class=\"bg-gray-100 p-2 my-3 border-2 rounded\"> <button type=\"submit\" class=\"bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded my-3\">New User </button><div id=\"create-user-error\"></div></div></form>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-post=\"/user\" hx-ext=\"response-targets\" hx-target-error=\"#create-user-alert\" hx-target=\"#create-user-alert\" hx-on::after-request=\"this.reset()\"><div class=\"flex flex-col gap-2 w-full\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = Input("username", "text", "Username").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = Input("password", "password", "Password").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = Input("role", "text", "Role").Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<button type=\"submit\" class=\"bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded my-3\">New User</button><div class=\"h-6\" id=\"create-user-alert\"></div></div></form>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
