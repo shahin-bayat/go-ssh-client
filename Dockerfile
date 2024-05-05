@@ -18,7 +18,7 @@ RUN go mod download
 COPY . .
 
 # Build the application
-# RUN GO_ENABLED=1 GOOS=linux go build -o /ssh-client cmd/api/main.go
+RUN GO_ENABLED=1 GOOS=linux go build -o /ssh-client cmd/api/main.go
 
 # Expose port 7070
 EXPOSE 7070
@@ -27,5 +27,5 @@ RUN chmod +x /app/startup.sh
 
 # Command to run the application
 # CMD ["/ssh-client"]
-#CMD ["air", "-c", ".air.toml"]
+# CMD ["air", "-c", ".air.toml"]
 CMD ["./startup.sh"]
